@@ -103,20 +103,53 @@ ansible-playbook masternode.yaml
 
 ansible-playbook workerjoin.yaml
 
-# Kubernetes Dashboard and metric server
+# Install Metric Server
+Install Metric-Server:
+=======================
 
-kubectl create -f dashboard.yaml
+wget https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/high-availability.yaml
 
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.5.0/aio/deploy/recommended.yaml
+vim high-availability.yaml
+add this - --kubelet-insecure-tls into the args section 
 
-kubectl patch -n kubernetes-dashboard svc kubernetes-dashboard --type='json' -p '[{"op":"replace","path":"/spec/type","value":"NodePort"}]'
+      containers:
+      - args:
+        - --cert-dir=/tmp
+        - --secure-port=4443
+        - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+        - --kubelet-use-node-status-port
+        - --metric-resolution=15s
+        - --kubelet-insecure-tls
+        image: k8s.gcr.io/metrics-server/metrics-server:v0.6.1
 
-#get the token to login the dashboard
+kubectl apply -f high-availability.yaml
 
-kubectl -n kubernetes-dashboard get secret $(kubectl -n kubernetes-dashboard get sa/admin-user -o jsonpath="{.secrets[0].name}") -o go-template="{{.data.token | base64decode}}"
+Also, to maximize the efficiency of this highly available configuration, it is recommended to add the --enable-aggregator-routing=true CLI flag to the kube-apiserver so that requests sent to Metrics Server are load balanced between the 2 instances.
 
+root@master01:~# cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep aggregator
+    - --enable-aggregator-routing=true
+root@master01:~#
 
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+# kubectl top node
+NAME       CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%
+master01   184m         9%     1841Mi          11%
+master02   164m         8%     1776Mi          11%
+master03   165m         8%     1778Mi          11%
+worker01   107m         5%     1797Mi          11%
+worker02   104m         5%     1826Mi          11%
+
+root@master01:~# kubectl top pod
+NAME                         CPU(cores)   MEMORY(bytes)
+test-nginx-bb646c46b-2lrxt   0m           2Mi
+test-nginx-bb646c46b-57mdn   0m           2Mi
+test-nginx-bb646c46b-8tdzl   0m           2Mi
+test-nginx-bb646c46b-jf4rb   0m           2Mi
+test-nginx-bb646c46b-lmb5q   0m           2Mi
+
+root@master01:~# kubectl top pod --containers -n test-istio
+POD        NAME          CPU(cores)   MEMORY(bytes)
+test-pod   istio-proxy   3m           49Mi
+test-pod   test-pod      0m           2Mi
 
 
  
