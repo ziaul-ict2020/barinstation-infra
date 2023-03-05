@@ -104,9 +104,6 @@ ansible-playbook masternode.yaml
 ansible-playbook workerjoin.yaml
 
 # Install Metric Server
-Install Metric-Server:
-=======================
-
 wget https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/high-availability.yaml
 
 vim high-availability.yaml
