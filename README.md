@@ -2,9 +2,9 @@
  
 sudo snap install lxd
  
- sudo lxd init
+sudo lxd init
  
- Would you like to use LXD clustering? (yes/no) [default=no]: no
+Would you like to use LXD clustering? (yes/no) [default=no]: no
  
 Do you want to configure a new storage pool? (yes/no) [default=yes]: yes
 
@@ -103,7 +103,10 @@ ansible-playbook masternode.yaml
 
 ansible-playbook workerjoin.yaml
 
-# Install Metric Server
+# metric server
+Install Metric-Server:
+=======================
+
 wget https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/high-availability.yaml
 
 vim high-availability.yaml
@@ -127,7 +130,7 @@ root@master01:~# cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep aggreg
     - --enable-aggregator-routing=true
 root@master01:~#
 
-# kubectl top node
+root@master01:~# kubectl top node
 NAME       CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%
 master01   184m         9%     1841Mi          11%
 master02   164m         8%     1776Mi          11%
@@ -136,6 +139,7 @@ worker01   107m         5%     1797Mi          11%
 worker02   104m         5%     1826Mi          11%
 
 root@master01:~# kubectl top pod
+---
 NAME                         CPU(cores)   MEMORY(bytes)
 test-nginx-bb646c46b-2lrxt   0m           2Mi
 test-nginx-bb646c46b-57mdn   0m           2Mi
@@ -144,9 +148,7 @@ test-nginx-bb646c46b-jf4rb   0m           2Mi
 test-nginx-bb646c46b-lmb5q   0m           2Mi
 
 root@master01:~# kubectl top pod --containers -n test-istio
+---
 POD        NAME          CPU(cores)   MEMORY(bytes)
 test-pod   istio-proxy   3m           49Mi
 test-pod   test-pod      0m           2Mi
-
-
- 
